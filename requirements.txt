@@ -1,0 +1,33 @@
+# HM3D视觉问答系统依赖包
+# Python 3.12+
+
+# 基础库
+numpy>=2.2.0
+PyYAML>=6.0.2
+requests>=2.32.0
+tqdm>=4.67.0
+
+# OpenAI API客户端
+openai>=1.83.0
+
+# Neo4j图数据库
+neo4j>=5.28.0
+
+# 数据验证和解析
+pydantic>=2.10.0
+
+# PyTorch深度学习框架（用于视觉处理）
+torch>=2.7.0
+torchvision>=0.22.0
+
+# 其他可选依赖（如果需要）
+# pathlib是Python标准库的一部分，无需单独安装
+# typing是Python标准库的一部分，无需单独安装
+# base64是Python标准库的一部分，无需单独安装
+# subprocess是Python标准库的一部分，无需单独安装
+# sys是Python标准库的一部分，无需单独安装
+# os是Python标准库的一部分，无需单独安装
+# json是Python标准库的一部分，无需单独安装
+# logging是Python标准库的一部分，无需单独安装
+# argparse是Python标准库的一部分，无需单独安装
+# urllib.parse是Python标准库的一部分，无需单独安装
