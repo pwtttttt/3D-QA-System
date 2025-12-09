@@ -35,7 +35,7 @@
 
 系统遵循六阶段处理流程：
 
-```
+
 ```mermaid
 graph TB
     subgraph 数据处理阶段_离线
