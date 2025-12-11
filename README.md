@@ -78,7 +78,7 @@
 
 
 
-## 2.1技术架构图 (System Architecture)
+## 2.1 技术架构图 (System Architecture)
 
 
 
@@ -88,15 +88,15 @@
 
 
 
-## 2.2通用 3D 场景图生成系统文档（第一步）
+## 2.2 通用 3D 场景图生成系统文档（第一步）
 
-### 2.2.1快速开始
+### 2.2.1 快速开始
 
-#### 2.2.1.1环境依赖
+#### 2.2.1.1 环境依赖
 
  需要安装 PyTorch, OpenAI, Ultralytics 等核心库。 `pip install neo4j pyyamltorch numpy open_clip_torch ultralytics openai pillow tqdm pyyaml` 
 
-#### 2.2.1.2模型下载与环境配置指南
+#### 2.2.1.2 模型下载与环境配置指南
 
 在运行 `Universal Scene Graph Generation System` 之前，您需要准备好以下 3 个核心模型权重文件，并将它们放置在配置文件指定的 `model_dir` 目录下（默认为 `./weights`）。
 
@@ -144,7 +144,7 @@ wget https://dl.fbaipublicfiles.com/segment_anything/sam_vit_l_0b3195.pth -O ./w
   - 注意: 手动加载离线 OpenCLIP 比较复杂，建议让代码首次运行自动下载，默认会缓存在 `~/.cache/huggingface/hub`。
   - 代码修改建议: 保持代码默认，确保网络通畅即可自动下载。如果非要本地加载，需修改代码 `pretrained` 参数指向绝对路径。
 
-#### 2.2.1.3运行指令
+#### 2.2.1.3 运行指令
 
 - 批量全自动模式（生产环境推荐）： `python main.py --mode batch`
 - 单场景调试模式（开发测试用）： `python main.py --mode single --scene_id 000-hm3d-BFRyYbPCCPE`
@@ -283,11 +283,11 @@ batch:
 
 ##  2.5 知识图谱构建与入库模块（第二步）
 
-### 2.5.1图谱模式设计 (Schema)
+### 2.5.1 图谱模式设计 (Schema)
 
 在 Neo4j 中构建的图数据模型如下：
 
-#### 2.5.1.1节点定义 (Nodes)
+#### 2.5.1.1 节点定义 (Nodes)
 
 模块简介
 
@@ -312,9 +312,9 @@ batch:
 - 属性关系：`(:Object)-[:MADE_OF]->(:Material)`
 - 属性关系：`(:Object)-[:HAS_COLOR]->(:Color)`
 
-### 2.5.2使用说明
+### 2.5.2 使用说明
 
-#### 2.5.2.1配置文件 (`config_neo4j.yaml`)
+#### 2.5.2.1 配置文件 (`config_neo4j.yaml`)
 
 通过配置文件指定 Neo4j 连接信息及数据源路径。
 
@@ -333,13 +333,13 @@ options:
   batch_size: 50     # 批量写入大小
 ```
 
-#### 2.5.2.2启动导入脚本
+#### 2.5.2.2 启动导入脚本
 
 ```Bash
 python import_to_neo4j.py --config config_neo4j.yaml
 ```
 
-### 2.5.3效果验证
+### 2.5.3 效果验证
 
 数据导入后，可在 Neo4j Browser 执行以下 Cypher 语句进行验证。
 
