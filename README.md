@@ -81,8 +81,8 @@
 ## 2.1 技术架构图 (System Architecture)
 
 
+<img width="232" height="515" alt="image" src="https://github.com/user-attachments/assets/79e5ab20-1c6a-4c97-b749-1d125be58235" />
 
-![img](https://wcn8oed3y0z2.feishu.cn/space/api/box/stream/download/asynccode/?code=MjZjOWU4NzUxM2E3OGVmYTljMGNkN2I2NzRjNjU4MjNfMFJ2RFVUNEU5elcwcWI5Y3h3ZkNJOXk3YjEzbUJzWFpfVG9rZW46VVRBYWJxMFJLb25USTJ4UlhJSmNXemdsbkpkXzE3NjU0NDg3MDI6MTc2NTQ1MjMwMl9WNA)
 
 
 
@@ -263,21 +263,8 @@ batch:
 
 1. 语义点云 (Semantic Point Cloud)
 
-![img](https://wcn8oed3y0z2.feishu.cn/space/api/box/stream/download/asynccode/?code=MTczYzViZGNhZWViOWNhMjVlNTFiOTAyM2NiYTViN2FfaVFkQzg4TkJkZjNBQkNWcmVXZnlDT0FOOVk3VDBTcW5fVG9rZW46VHJ1NmJRY3Nkb1BuRnV4V2pzdGNtT1J2blRoXzE3NjU0NDkxMTA6MTc2NTQ1MjcxMF9WNA)
 
-
-
-
-
-
-
-
-
-
-
-
-
-
+<img width="1955" height="1370" alt="image (1)" src="https://github.com/user-attachments/assets/fdec21cc-4280-4812-b6d2-8ec657f4aca5" />
 
 
 
