@@ -5,19 +5,6 @@
 
 ## 目录
 
-
-
-
-根据您提供的两个目录，我将它们合并成一个完整的目录结构。以下是合并后的目录：
-
-## 目录
-
-
-
-
-
-
-
 - [1. 系统概述](#1-系统概述)
   - [1.1 项目背景](#11-项目背景)
   - [1.2 技术架构](#12-技术架构)
@@ -32,8 +19,6 @@
     - [2.2.2 配置文件 (config.yaml)](#222-配置文件-configyaml)
   - [2.3 数据接入标准](#23-数据接入标准)
   - [2.4 输出成果展示](#24-输出成果展示)
-    - [2.4.1 3D 场景图 (Scene Graph JSON)](#241-3d-场景图-scene-graph-json)
-    - [2.4.2 语义点云 (Semantic Point Cloud)](#242-语义点云-semantic-point-cloud)
   - [2.5 知识图谱构建与入库模块（第二步）](#25-知识图谱构建与入库模块第二步)
     - [2.5.1 图谱模式设计 (Schema)](#251-图谱模式设计-schema)
       - [2.5.1.1 节点定义 (Nodes)](#2511-节点定义-nodes)
@@ -90,6 +75,283 @@
 - **可解释性**：完整的过程日志和决策路径追踪
 
 ---
+
+
+
+## 2.1技术架构图 (System Architecture)
+
+
+
+![img](https://wcn8oed3y0z2.feishu.cn/space/api/box/stream/download/asynccode/?code=MjZjOWU4NzUxM2E3OGVmYTljMGNkN2I2NzRjNjU4MjNfMFJ2RFVUNEU5elcwcWI5Y3h3ZkNJOXk3YjEzbUJzWFpfVG9rZW46VVRBYWJxMFJLb25USTJ4UlhJSmNXemdsbkpkXzE3NjU0NDg3MDI6MTc2NTQ1MjMwMl9WNA)
+
+
+
+
+
+## 2.2通用 3D 场景图生成系统文档（第一步）
+
+### 2.2.1快速开始
+
+#### 2.2.1.1环境依赖
+
+ 需要安装 PyTorch, OpenAI, Ultralytics 等核心库。 `pip install neo4j pyyamltorch numpy open_clip_torch ultralytics openai pillow tqdm pyyaml` 
+
+#### 2.2.1.2模型下载与环境配置指南
+
+在运行 `Universal Scene Graph Generation System` 之前，您需要准备好以下 3 个核心模型权重文件，并将它们放置在配置文件指定的 `model_dir` 目录下（默认为 `./weights`）。
+
+##### 核心模型列表
+
+模型用途文件名 (示例)推荐版本作用检测 (Detection)[yolov8l-world.pt](http://yolov8l-world.pt)YOLOv8-World (Large)识别图像中的物体并画框（开放词汇检测）。分割 (Segmentation)[sam_l.pt](http://sam_l.pt)SAM (ViT-L)根据框生成精细的物体轮廓掩码。特征 (Feature)open_clip_pytorch_model.binOpenCLIP (ViT-H-14)提取物体特征向量，用于判断“这是不是同一个物体”。
+
+##### 下载地址与步骤
+
+请按照以下步骤下载模型，并统一放入一个文件夹（例如项目根目录下的 `weights/` 文件夹）。
+
+###### 下载 YOLOv8-World
+
+*这是目前最强的开放词汇检测模型，无需重新训练即可识别几乎所有物体。*
+
+- 下载地址: [HuggingFace - Ultralytics](https://github.com/ultralytics/assets/releases/download/v8.1.0/yolov8l-world.pt)
+- 命令行下载:
+
+```Bash
+wget https://github.com/ultralytics/assets/releases/download/v8.1.0/yolov8l-world.pt -P ./weights/
+```
+
+###### 下载 SAM (Segment Anything Model)
+
+*Meta 发布的最强分割大模型，推荐使用 ViT-L 版本（精度与速度的平衡）。*
+
+- 下载地址: [Facebook Research - SAM Checkpoints](https://dl.fbaipublicfiles.com/segment_anything/sam_vit_l_0b3195.pth)
+- 命令行下载:
+
+```Bash
+wget https://dl.fbaipublicfiles.com/segment_anything/sam_vit_l_0b3195.pth -O ./weights/sam_l.pt
+```
+
+- *(注意：下载下来的文件名是* *sam_vit_l_0b3195.pth**，为了配合代码，建议重命名为* *sam_l.pt**，或者修改* *config.yaml* *中的配置)*
+
+###### 下载 OpenCLIP
+
+*OpenAI* *CLIP 的开源实现，用于提取高质量语义特征。ViT-H-14 是目前效果最好的版本之一。*
+
+- 说明: OpenCLIP 通常不需要手动下载 `.bin` 文件，代码中的 `open_clip.create_model_and_transforms` 会自动从 HuggingFace Hub 下载并缓存。
+- 如果必须手动下载 (离线环境):
+  - 访问 [HuggingFace - laion/CLIP-ViT-H-14-laion2B-s32B-b79K](https://huggingface.co/laion/CLIP-ViT-H-14-laion2B-s32B-b79K/tree/main)
+  - 下载 `open_clip_pytorch_model.bin`。
+  - 放入 `weights/` 目录。
+  - 注意: 手动加载离线 OpenCLIP 比较复杂，建议让代码首次运行自动下载，默认会缓存在 `~/.cache/huggingface/hub`。
+  - 代码修改建议: 保持代码默认，确保网络通畅即可自动下载。如果非要本地加载，需修改代码 `pretrained` 参数指向绝对路径。
+
+#### 2.2.1.3运行指令
+
+- 批量全自动模式（生产环境推荐）： `python main.py --mode batch`
+- 单场景调试模式（开发测试用）： `python main.py --mode single --scene_id 000-hm3d-BFRyYbPCCPE`
+
+### 2.2.2 配置文件 (config.yaml)
+
+*通过修改此文件适配不同**数据源**，无需改动代码。*
+
+```YAML
+# ==========================================
+# Universal 3D Scene Graph Config
+# ==========================================
+
+# [Path Settings] 路径设置
+paths:
+  dataset_root: "/path/to/your/custom_dataset"   # 你的数据集根目录
+  output_base_root: "./output_results"           # 结果输出目录
+  class_file: "./scannet200_classes.txt"         # 类别列表文件
+  model_dir: "./weights"                         # 模型权重文件夹
+
+# [Data Format] 数据格式适配 (核心修改点)
+data_format:
+  rgb_suffix: "-rgb.png"    # 彩色图后缀 (例如 .jpg, _color.png)
+  depth_suffix: "-depth.png" # 深度图后缀
+  pose_suffix: ".txt"       # 位姿文件后缀
+  img_width: 640            # 统一处理的宽度
+  img_height: 480           # 统一处理的高度
+
+# [Model Weights] 模型权重
+models:
+  yolo_weight: "yolov8l-world.pt"
+  sam_weight: "sam_l.pt"
+  clip_weight: "open_clip_pytorch_model.bin"
+  clip_model_type: "ViT-H-14"
+
+# [VLM Settings] 大模型配置
+vlm:
+  model_name: "qwen25-vl"
+  api_base: "http://your-api-endpoint/v1"
+  api_key: "your-api-key"
+  temperature: 0.1
+  max_tokens: 20
+
+# [Processing Parameters] 处理参数
+params:
+  device: "cuda"
+  match_thresh: 0.65       # 物体相似度合并阈值
+  conf_thresh: 0.15        # YOLO置信度
+  depth_scale: 1000.0      # [关键] 深度图数值除以多少等于米 (HM3D是6553.5, TUM是5000)
+  stride: 5                # 每隔几帧处理一次 (跳帧)
+  end_frame: -1            # -1 处理所有帧
+  max_save_images: 20      # 每个物体保存多少张图
+
+# [Batch Execution] 批量运行
+batch:
+  python_exe: "python"
+  continue_on_error: true
+```
+
+        
+
+
+### 2.3 数据接入标准
+
+为了保证系统的通用性，新接入的数据集需满足以下目录结构：
+
+- DatasetRoot/
+  - Scene_A/
+    - `xxxx.jpg` (RGB图)
+    - `xxxx.png` (深度图，16bit)
+    - `xxxx.txt` (相机位姿矩阵)
+    - `xxxx.txt` (相机内参)
+  - Scene_B/ ...
+
+------
+
+### 2.4 输出成果展示
+
+运行结束后，系统将输出以下两类核心数据：
+
+1. 3D 场景图 (Scene Graph JSON)
+
+描述了场景中所有物体的语义信息及空间位置。
+
+```JSON
+  {
+    "combined_index": 9,
+    "label_name": "Brown dining table",
+    "center": [
+      -0.7423055171966553,
+      -2.302781343460083,
+      3.815586566925049
+    ],
+    "dimensions": [
+      3.6187422275543213,
+      0.08046865463256836,
+      6.75449800491333
+    ],
+    "orig_frame_ids": [
+      "00025"
+    ],
+    "color_analysis": "Brown",
+    "material": "Glass",
+    "scene_id": "000-hm3d-BFRyYbPCCPE",
+    "left_of": [
+      8,
+      11
+    ],
+    "right_of": [],
+    "above": [],
+    "below": [
+      8
+    ]
+  },
+```
+
+1. 语义点云 (Semantic Point Cloud)
+
+![img](https://wcn8oed3y0z2.feishu.cn/space/api/box/stream/download/asynccode/?code=MTczYzViZGNhZWViOWNhMjVlNTFiOTAyM2NiYTViN2FfaVFkQzg4TkJkZjNBQkNWcmVXZnlDT0FOOVk3VDBTcW5fVG9rZW46VHJ1NmJRY3Nkb1BuRnV4V2pzdGNtT1J2blRoXzE3NjU0NDkxMTA6MTc2NTQ1MjcxMF9WNA)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+##  2.5 知识图谱构建与入库模块（第二步）
+
+### 2.5.1图谱模式设计 (Schema)
+
+在 Neo4j 中构建的图数据模型如下：
+
+#### 2.5.1.1节点定义 (Nodes)
+
+模块简介
+
+本模块负责将上游生成的3D 场景图 JSON解析并批量导入 Neo4j 图数据库。
+
+通过构建 Scene (场景) - Object (物体) - Attribute (属性) 的图谱结构，实现对 3D 空间数据的语义检索与推理。
+
+> *💡 核心能力*
+>
+> - *自动化入库：递归扫描数据目录，自动识别新旧数据。*
+> - *幂等性设计：支持重复运行，自动去重或覆盖更新。*
+> - *关系构建：自动建立空间关系（**LEFT_OF**,* *ABOVE**）及属性关联（材质、颜色）。*
+
+
+
+节点标签 (Label)属性 (Properties)说明Scenescene_id, object_count代表一个独立的房间或扫描场景Objectlabel, center, size场景中的具体物体，动态 Label (如 Chair)Materialname材质节点 (如 wood, metal)Colorname颜色节点 (如 red, blue)
+
+#### 2.5.1.2 关系定义 (Relationships)
+
+- 层级关系：`(:Object)-[:IN_SCENE]->(:Scene)` *(隐式关联，通常通过属性索引)*
+- 空间关系：`(:Object)-[:LEFT_OF | :ABOVE]->(:Object)`
+- 属性关系：`(:Object)-[:MADE_OF]->(:Material)`
+- 属性关系：`(:Object)-[:HAS_COLOR]->(:Color)`
+
+### 2.5.2使用说明
+
+#### 2.5.2.1配置文件 (`config_neo4j.yaml`)
+
+通过配置文件指定 Neo4j 连接信息及数据源路径。
+
+```YAML
+neo4j:
+  uri: "bolt://localhost:7688"
+  user: "neo4j"
+  password: "your_password"
+
+paths:
+  # 上游生成结果的根目录
+  results_root: "/home/eg4/lsm_test/bishe/框架/通用框架代码/output_results"
+
+options:
+  force_update: true  # 是否强制覆盖已存在的场景
+  batch_size: 50     # 批量写入大小
+```
+
+#### 2.5.2.2启动导入脚本
+
+```Bash
+python import_to_neo4j.py --config config_neo4j.yaml
+```
+
+### 2.5.3效果验证
+
+数据导入后，可在 Neo4j Browser 执行以下 Cypher 语句进行验证。
+
+场景概览：
+
+```Bash
+// 查看已导入的场景列表
+MATCH (s:Scene) RETURN s.scene_id, s.object_count LIMIT 10;
+```
+
+
+
 
 ## 3. 系统架构与实现
 
