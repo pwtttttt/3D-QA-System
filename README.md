@@ -1,7 +1,7 @@
 # 基于多模态大模型的三维场景问答系统技术报告
 
 
-根据您提供的技术报告内容，我为您生成一个清晰、专业的Markdown目录结构:[1][2]
+<img width="1440" height="810" alt="image" src="https://github.com/user-attachments/assets/ad355047-7527-4696-8d8c-36d9f38d2060" />
 
 ## 目录
 
